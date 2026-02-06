@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Saw Sparks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%;
+            background: #000; font-family: 'Montserrat', sans-serif;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        /* --- Backgrounds --- */
+        .stars-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #0d1b2a 0%, #000 100%);
+            z-index: 0;
+        }
+
+        #explosionCanvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100; pointer-events: none;
+        }
+
+        .star {
+            position: absolute; background: white; border-radius: 50%;
+            animation: blink var(--duration) infinite ease-in-out;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.3); }
+        }
+
+        /* --- Sections --- */
+        .section {
+            position: relative; height: 100vh; z-index: 10;
+            display: flex; justify-content: center; align-items: center; width: 100%;
+        }
+
+        .text-wrapper {
+            position: sticky; top: 0; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            text-align: center; pointer-events: none; width: 100%;
+        }
+
+        .invite-text {
+            color: white; font-size: clamp(1.5rem, 6vw, 3rem); font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5rem;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+            position: absolute; width: 80vw; opacity: 0;
+        }
+
+        .valentine-container, .question-container {
+            text-align: center; opacity: 0; transform: translateY(30px);
+            transition: all 1.2s ease-out; width: 90%; max-width: 700px;
+        }
+
+        .visible { opacity: 1 !important; transform: translateY(0) !important; }
+
+        .question-text {
+            color: white; font-size: clamp(1.1rem, 4vw, 2.2rem); font-weight: 700;
+            letter-spacing: 0.1rem; margin-bottom: 40px; text-transform: uppercase;
+        }
+
+        .btn-wrapper { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+
+        .choice-btn {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white; padding: 18px 35px; font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem; letter-spacing: 0.15rem; cursor: pointer;
+            transition: all 0.4s ease; width: 100%; max-width: 550px;
+            backdrop-filter: blur(8px); border-radius: 8px; text-transform: uppercase;
+            outline: none;
+        }
+
+        .choice-btn:hover { background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.8); }
+
+        .success-msg {
+            margin-top: 30px; color: #fff; font-size: 1rem; letter-spacing: 0.15rem;
+            font-style: italic; opacity: 0; transform: translateY(10px);
+            transition: all 0.8s ease; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .success-msg.show { opacity: 1; transform: translateY(0); }
+
+        .final-success {
+            font-weight: 700 !important;
+            font-style: normal !important;
+            font-size: clamp(1rem, 4vw, 1.5rem) !important;
+            color: #fff !important;
+            margin-top: 40px;
+        }
+
+        #finalQuestion .question-text {
+            font-size: clamp(1.8rem, 8vw, 4rem);
+            letter-spacing: 0.5rem;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+        }
+
+        /* --- Effects --- */
+        .vibrate { animation: vibrate 0.3s linear; border-color: rgba(255, 0, 0, 0.4) !important; }
+        @keyframes vibrate {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+
+        .correct-glow {
+            background: rgba(255, 255, 255, 0.2) !important; border-color: white !important;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.6); transform: scale(1.03);
+        }
+
+        .sub-text { font-weight: 300; font-size: 0.5em; letter-spacing: 0.8rem; color: white; display: block; margin-top: 10px; }
+        .phrase-1 { animation: appear 2.5s ease-out 1s forwards, disappear 1.5s ease-in 5s forwards; }
+        .phrase-2 { animation: appear 2.5s ease-out 6.5s forwards; }
+
+        @keyframes appear {
+            0% { opacity: 0; filter: blur(15px); transform: scale(0.95); }
+            100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+        }
+
+        @keyframes disappear {
+            0% { opacity: 1; filter: blur(0px); }
+            100% { opacity: 0; filter: blur(10px); transform: translateY(-20px); }
+        }
+
+        .scroll-prompt {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            color: white; font-weight: 300; font-size: 0.8rem; letter-spacing: 0.3rem;
+            text-transform: uppercase; opacity: 0; z-index: 20; transition: opacity 1s ease;
+            animation: fadeInPrompt 2s ease-out 11s forwards, bounce 2s infinite ease-in-out 13s;
+        }
+
+        @keyframes fadeInPrompt { to { opacity: 0.6; } }
+        @keyframes bounce { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -10px); } }
+    </style>
+</head>
+<body>
+
+    <div class="stars-container" id="starField"></div>
+    <canvas id="explosionCanvas"></canvas>
+    
+    <div class="section">
+        <div class="text-wrapper" id="textWrapper">
+            <div class="invite-text phrase-1">I saw sparks.<br><span class="sub-text">Oh, I saw sparks.</span></div>
+            <div class="invite-text phrase-2">I promise you this.<br><span class="sub-text">I'll always look out for you.</span></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="valentine-container" id="valentineGroup">
+            <span style="color: white; font-size: clamp(1.5rem, 6vw, 3.5rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.4rem; margin-bottom: 10px; display: block;">Divya's First Valentine</span>
+            <span style="color: rgba(255, 255, 255, 0.9); font-size: clamp(0.9rem, 3vw, 1.2rem); font-weight: 300; letter-spacing: 0.2rem; display: block; margin-bottom: 20px;">Let's make this one a night to remember</span>
+            <span style="color: rgba(255, 255, 255, 0.5); font-size: clamp(0.7rem, 2vw, 0.8rem); font-weight: 300; text-transform: uppercase; letter-spacing: 0.3rem; display: block; font-style: italic;">But first, answer these 3 questions</span>
+        </div>
+    </div>
+
+    <div class="section" id="pageQ1">
+        <div class="question-container" id="q1Container">
+            <div class="question-text">Do you have valentines plans?</div>
+            <div class="btn-wrapper">
+                <button class="choice-btn" id="q1y" onclick="handleQ1('yes')">Yes, I would like to see what the hype is about</button>
+                <button class="choice-btn" id="q1n" onclick="handleQ1('no')">No, I am kinda boring</button>
+            </div>
+            <div class="success-msg" id="msgQ1">Divya cringing internally but moving on</div>
+        </div>
+    </div>
+
+    <div class="section" id="pageQ2">
+        <div class="question-container" id="q2Container">
+            <div class="question-text">Do you have a special someone in mind?</div>
+            <div class="btn-wrapper">
+                <button class="choice-btn" id="q2y" onclick="handleQ2('yes')">Yes, one cute whitefield boy has been following me for a while</button>
+                <button class="choice-btn" id="q2n" onclick="handleQ2('no')">No, I don’t have a cute whitefield boy following me</button>
+            </div>
+            <div class="success-msg" id="msgQ2">Well sounds like he's a keeper ❤️</div>
+        </div>
+    </div>
+
+    <div class="section" id="pageQ3">
+        <div class="question-container" id="q3Container">
+            <div class="question-text">So are you now excited for 14th?</div>
+            <div class="btn-wrapper">
+                <button class="choice-btn" onclick="handleWrong(this)">Yes, seems like a good plan</button>
+                <button class="choice-btn" onclick="handleWrong(this)">Yess, at least good food</button>
+                <button class="choice-btn" onclick="handleWrong(this)">Yesss, i can’t wait</button>
+                <button class="choice-btn" id="q3final" onclick="handleGrandFinale()">YESSS, all of the above plus the cute boy</button>
+            </div>
+            <div class="success-msg" id="msgQ3">Cute boy is smiling right now 😁</div>
+        </div>
+    </div>
+
+    <div class="section" id="pageFinal">
+        <div class="question-container" id="finalQuestion">
+            <div class="question-text">Will you be my valentine?</div>
+            <div class="btn-wrapper" id="finalBtnWrapper" style="flex-direction: row; justify-content: center; gap: 30px;">
+                <button class="choice-btn" style="max-width: 150px;" id="btnYesFinal" onclick="handleChoiceFinal('yes')">Yes</button>
+                <button class="choice-btn" style="max-width: 150px;" id="btnNoFinal" onmouseover="moveNo()" ontouchstart="moveNo()">No</button>
+            </div>
+            <div class="success-msg final-success" id="msgFinal">Yaaaaay, see you on 14th, more details will follow ❤️</div>
+        </div>
+    </div>
+
+    <div class="scroll-prompt" id="scrollPrompt">Scroll Down</div>
+
+    <script>
+        // Explosion Canvas Logic
+        const canvas = document.getElementById('explosionCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = (Math.random() - 0.5) * 15;
+                this.speedY = (Math.random() - 0.5) * 15;
+                this.color = `rgba(255, 255, 255, ${Math.random()})`;
+                this.life = 100;
+            }
+            update() { this.x += this.speedX; this.y += this.speedY; this.life -= 1.5; }
+            draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+        }
+
+        function animateExplosion() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                p.update(); p.draw();
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+            if (particles.length > 0) requestAnimationFrame(animateExplosion);
+        }
+
+        function triggerExplosion() {
+            for (let i = 0; i < 200; i++) particles.push(new Particle(canvas.width / 2, canvas.height / 2));
+            animateExplosion();
+        }
+
+        // --- Interaction Logic ---
+        function handleQ1(choice) {
+            if(choice === 'yes') {
+                document.getElementById('q1y').classList.add('correct-glow');
+                document.getElementById('msgQ1').classList.add('show');
+                setTimeout(() => document.getElementById('pageQ2').scrollIntoView({ behavior: 'smooth' }), 2500);
+            } else { handleWrong(document.getElementById('q1n')); }
+        }
+
+        function handleQ2(choice) {
+            if(choice === 'yes') {
+                document.getElementById('q2y').classList.add('correct-glow');
+                document.getElementById('msgQ2').classList.add('show');
+                setTimeout(() => document.getElementById('pageQ3').scrollIntoView({ behavior: 'smooth' }), 2500);
+            } else { handleWrong(document.getElementById('q2n')); }
+        }
+
+        function handleWrong(btn) {
+            btn.classList.remove('vibrate'); void btn.offsetWidth; btn.classList.add('vibrate');
+        }
+
+        function handleGrandFinale() {
+            document.getElementById('q3final').classList.add('correct-glow');
+            document.getElementById('msgQ3').classList.add('show');
+            setTimeout(() => {
+                triggerExplosion();
+                setTimeout(() => document.getElementById('pageFinal').scrollIntoView({ behavior: 'smooth' }), 500);
+            }, 1500);
+        }
+
+        function moveNo() {
+            const btn = document.getElementById('btnNoFinal');
+            btn.style.position = 'fixed';
+            btn.style.left = Math.random() * (window.innerWidth - 150) + 'px';
+            btn.style.top = Math.random() * (window.innerHeight - 50) + 'px';
+        }
+
+        function handleChoiceFinal(choice) {
+            if(choice === 'yes') {
+                triggerExplosion();
+                document.getElementById('btnYesFinal').classList.add('correct-glow');
+                document.getElementById('msgFinal').classList.add('show');
+                document.getElementById('finalBtnWrapper').style.opacity = "0";
+                document.getElementById('finalBtnWrapper').style.pointerEvents = "none";
+            }
+        }
+
+        // --- Scroll Reveal Logic ---
+        window.addEventListener('scroll', () => {
+            const windowHeight = window.innerHeight;
+            const scrollPos = window.scrollY;
+            const prompt = document.getElementById('scrollPrompt');
+            
+            document.getElementById('textWrapper').style.opacity = Math.max(1 - (scrollPos / 400), 0);
+            
+            const els = ['valentineGroup', 'q1Container', 'q2Container', 'q3Container', 'finalQuestion'];
+            els.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const rect = el.getBoundingClientRect();
+                if (rect.top < windowHeight * 0.75 && rect.bottom > windowHeight * 0.25) {
+                    el.classList.add('visible');
+                    prompt.style.opacity = "0";
+                    prompt.style.pointerEvents = "none";
+                } else {
+                    el.classList.remove('visible');
+                }
+            });
+
+            if (scrollPos < 100) {
+                prompt.style.opacity = "0.6";
+                prompt.style.pointerEvents = "auto";
+            }
+        });
+
+        // --- Background Init ---
+        const field = document.getElementById('starField');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 'px';
+            star.style.width = size; star.style.height = size;
+            star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+            field.appendChild(star);
+        }
+    </script>
+</body>
+</html>
