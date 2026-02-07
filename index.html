@@ -13,6 +13,42 @@
             overflow-x: hidden;
         }
 
+        /* --- Enter Screen Overlay (Fixed Centering) --- */
+        #enterScreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; color: white;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 2000; cursor: pointer;
+            transition: opacity 1.5s ease, visibility 1.5s;
+        }
+
+        #enterButton {
+            font-size: 1.2rem; letter-spacing: 0.5rem; text-transform: uppercase;
+            font-weight: 300; border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 20px 40px; border-radius: 4px;
+            background: transparent; color: white;
+            transition: all 0.5s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        #enterButton:hover { background: white; color: black; box-shadow: 0 0 20px white; }
+
+        /* --- Music Toggle --- */
+        #musicToggle {
+            position: fixed; bottom: 20px; left: 20px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.6); padding: 10px 15px; border-radius: 30px;
+            font-size: 0.7rem; letter-spacing: 0.1rem; text-transform: uppercase;
+            cursor: pointer; backdrop-filter: blur(5px); transition: all 0.3s ease;
+            opacity: 0; pointer-events: none;
+        }
+
         /* --- Backgrounds --- */
         .stars-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -35,7 +71,6 @@
             50% { opacity: 0.8; transform: scale(1.3); }
         }
 
-        /* --- Shooting Stars Styling --- */
         .shooting-star {
             position: absolute; height: 2px;
             background: linear-gradient(-90deg, rgba(255,255,255,1), rgba(255,255,255,0));
@@ -43,7 +78,7 @@
             z-index: 1;
         }
 
-        /* --- Sections --- */
+        /* --- Sections & Text --- */
         .section {
             position: relative; height: 100vh; z-index: 10;
             display: flex; justify-content: center; align-items: center; width: 100%;
@@ -68,6 +103,25 @@
         }
 
         .visible { opacity: 1 !important; transform: translateY(0) !important; }
+
+        /* Updated Spacing */
+        .valentine-main {
+            color: white; font-size: clamp(1.5rem, 6vw, 3.5rem); font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.4rem;
+            margin-bottom: 25px; display: block;
+        }
+
+        .valentine-sub {
+            color: rgba(255, 255, 255, 0.9); font-size: clamp(0.9rem, 3vw, 1.2rem);
+            font-weight: 300; letter-spacing: 0.2rem; display: block;
+            margin-bottom: 40px;
+        }
+
+        .valentine-hint {
+            color: rgba(255, 255, 255, 0.5); font-size: clamp(0.7rem, 2vw, 0.8rem);
+            font-weight: 300; text-transform: uppercase; letter-spacing: 0.3rem;
+            display: block; font-style: italic;
+        }
 
         .question-text {
             color: white; font-size: clamp(1.1rem, 4vw, 2.2rem); font-weight: 700;
@@ -105,6 +159,7 @@
             text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
         }
 
+        /* --- Animations --- */
         .vibrate { animation: vibrate 0.3s linear; border-color: rgba(255, 0, 0, 0.4) !important; }
         @keyframes vibrate {
             0%, 100% { transform: translateX(0); }
@@ -145,6 +200,16 @@
 </head>
 <body>
 
+    <div id="enterScreen" onclick="startExperience()">
+        <div id="enterButton">Enter</div>
+    </div>
+
+    <button id="musicToggle" onclick="toggleMusic()">Music: On</button>
+
+    <audio id="bgMusic" loop>
+        <source src="https://raw.githubusercontent.com/pawansanjiv98-sudo/BeMyValentine/main/Coldplay%20-%20Sparks%20-%20Instrumental%20(NO%20VOICE!).mp3" type="audio/mpeg">
+    </audio>
+
     <div class="stars-container" id="starField"></div>
     <canvas id="explosionCanvas"></canvas>
     
@@ -157,9 +222,9 @@
 
     <div class="section">
         <div class="valentine-container" id="valentineGroup">
-            <span style="color: white; font-size: clamp(1.5rem, 6vw, 3.5rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.4rem; margin-bottom: 10px; display: block;">Divya's First Valentine</span>
-            <span style="color: rgba(255, 255, 255, 0.9); font-size: clamp(0.9rem, 3vw, 1.2rem); font-weight: 300; letter-spacing: 0.2rem; display: block; margin-bottom: 20px;">Let's make this one a night to remember</span>
-            <span style="color: rgba(255, 255, 255, 0.5); font-size: clamp(0.7rem, 2vw, 0.8rem); font-weight: 300; text-transform: uppercase; letter-spacing: 0.3rem; display: block; font-style: italic;">But first, answer these 3 questions</span>
+            <span class="valentine-main">Divya's First Valentine</span>
+            <span class="valentine-sub">Let's make this one a night to remember</span>
+            <span class="valentine-hint">But first, answer these 3 questions</span>
         </div>
     </div>
 
@@ -212,7 +277,22 @@
     <div class="scroll-prompt" id="scrollPrompt">Scroll Down</div>
 
     <script>
-        // Explosion Canvas Logic
+        const music = document.getElementById('bgMusic');
+        const musicBtn = document.getElementById('musicToggle');
+
+        function startExperience() {
+            const screen = document.getElementById('enterScreen');
+            music.play().catch(e => console.log("Audio failed", e));
+            musicBtn.style.opacity = '1'; musicBtn.style.pointerEvents = 'auto';
+            screen.style.opacity = '0';
+            setTimeout(() => { screen.style.visibility = 'hidden'; }, 1500);
+        }
+
+        function toggleMusic() {
+            if (music.paused) { music.play(); musicBtn.innerText = "Music: On"; }
+            else { music.pause(); musicBtn.innerText = "Music: Off"; }
+        }
+
         const canvas = document.getElementById('explosionCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -246,7 +326,6 @@
             animateExplosion();
         }
 
-        // --- Restored Shooting Star Function ---
         function createShootingStar(fast = false) {
             const shooter = document.createElement('div');
             shooter.className = 'shooting-star';
@@ -266,7 +345,6 @@
             setTimeout(() => shooter.remove(), duration * 1000);
         }
 
-        // --- Interaction Logic ---
         function handleQ1(choice) {
             if(choice === 'yes') {
                 document.getElementById('q1y').classList.add('correct-glow');
@@ -283,16 +361,13 @@
             } else { handleWrong(document.getElementById('q2n')); }
         }
 
-        function handleWrong(btn) {
-            btn.classList.remove('vibrate'); void btn.offsetWidth; btn.classList.add('vibrate');
-        }
+        function handleWrong(btn) { btn.classList.remove('vibrate'); void btn.offsetWidth; btn.classList.add('vibrate'); }
 
         function handleGrandFinale() {
             document.getElementById('q3final').classList.add('correct-glow');
             document.getElementById('msgQ3').classList.add('show');
             setTimeout(() => {
                 triggerExplosion();
-                // Extra celebratory stars
                 for(let i=0; i<8; i++) { setTimeout(() => createShootingStar(true), i * 150); }
                 setTimeout(() => document.getElementById('pageFinal').scrollIntoView({ behavior: 'smooth' }), 500);
             }, 1500);
@@ -315,28 +390,22 @@
             }
         }
 
-        // --- Scroll Logic ---
         window.addEventListener('scroll', () => {
             const windowHeight = window.innerHeight;
             const scrollPos = window.scrollY;
             const prompt = document.getElementById('scrollPrompt');
             document.getElementById('textWrapper').style.opacity = Math.max(1 - (scrollPos / 400), 0);
-            
             ['valentineGroup', 'q1Container', 'q2Container', 'q3Container', 'finalQuestion'].forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 const rect = el.getBoundingClientRect();
                 if (rect.top < windowHeight * 0.75 && rect.bottom > windowHeight * 0.25) {
-                    el.classList.add('visible');
-                    prompt.style.opacity = "0";
-                    prompt.style.pointerEvents = "none";
+                    el.classList.add('visible'); prompt.style.opacity = "0";
                 } else { el.classList.remove('visible'); }
             });
-
             if (scrollPos < 100) { prompt.style.opacity = "0.6"; prompt.style.pointerEvents = "auto"; }
         });
 
-        // --- Star Field Init ---
         for (let i = 0; i < 150; i++) {
             const star = document.createElement('div');
             star.className = 'star';
@@ -346,8 +415,6 @@
             star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
             starField.appendChild(star);
         }
-
-        // Restored Shooting Star Interval
         setInterval(() => { if (Math.random() > 0.4) createShootingStar(); }, 6000);
     </script>
 </body>
